@@ -6,7 +6,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -14,18 +13,21 @@ using TcxReader.data.xml;
 
 namespace TcxReader
 {
-    public partial class Form1 : Form
+    public partial class TcxReader : Form
     {
         private List<Activity> _activities = new List<Activity>();
 
-        public Form1()
+        public TcxReader()
         {
             InitializeComponent();
+            _updatePtLabel();
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog fd = new OpenFileDialog();
+            fd.Multiselect = false;
+            fd.Filter = "TXC files (*.tcx)|*.tcx";
             fd.ShowDialog(this);
             if (!string.IsNullOrEmpty(fd.FileName))
             {
@@ -51,9 +53,9 @@ namespace TcxReader
                                             activityElement.Descendants(ns1 + "Lap")
                                         select new Lap
                                            {
-                                               TotalTimeSeconds = lapElement.Element(ns1 + "TotalTimeSeconds") != null ? Convert.ToDouble((string)lapElement.Element(ns1 + "TotalTimeSeconds").Value) : 0.00,
-                                               DistanceMeters = lapElement.Element(ns1 + "DistanceMeters") != null ? Convert.ToDouble((string)lapElement.Element(ns1 + "DistanceMeters").Value) : 0.00,
-                                               MaximumSpeed = lapElement.Element(ns1 + "MaximumSpeed") != null ? Convert.ToDouble((string)lapElement.Element(ns1 + "DistanceMeters").Value) : 0.00,
+                                               TotalTimeSeconds = lapElement.Element(ns1 + "TotalTimeSeconds") != null ? Convert.ToDouble((string)lapElement.Element(ns1 + "TotalTimeSeconds").Value, System.Globalization.CultureInfo.InvariantCulture) : 0.00,
+                                               DistanceMeters = lapElement.Element(ns1 + "DistanceMeters") != null ? Convert.ToDouble((string)lapElement.Element(ns1 + "DistanceMeters").Value, System.Globalization.CultureInfo.InvariantCulture) : 0.00,
+                                               MaximumSpeed = lapElement.Element(ns1 + "MaximumSpeed") != null ? Convert.ToDouble((string)lapElement.Element(ns1 + "DistanceMeters").Value, System.Globalization.CultureInfo.InvariantCulture) : 0.00,
                                                Tracks = (from trackElement in
                                                              lapElement.Descendants(ns1 + "Track")
                                                          select new Track
@@ -62,8 +64,8 @@ namespace TcxReader
                                                                                    trackElement.Descendants(ns1 + "Trackpoint")
                                                                                select new Trackpoint
                                                                                {
-                                                                                   AltitudeMeters = trackPointElement.Element(ns1 + "AltitudeMeters") != null ? Convert.ToDouble((string)trackPointElement.Element(ns1 + "AltitudeMeters").Value) : 0.00,
-                                                                                   DistanceMeters = trackPointElement.Element(ns1 + "DistanceMeters") != null ? Convert.ToDouble((string)trackPointElement.Element(ns1 + "DistanceMeters").Value) : 0.00,
+                                                                                   AltitudeMeters = trackPointElement.Element(ns1 + "AltitudeMeters") != null ? Convert.ToDouble((string)trackPointElement.Element(ns1 + "AltitudeMeters").Value, System.Globalization.CultureInfo.InvariantCulture) : 0.00,
+                                                                                   DistanceMeters = trackPointElement.Element(ns1 + "DistanceMeters") != null ? Convert.ToDouble((string)trackPointElement.Element(ns1 + "DistanceMeters").Value, System.Globalization.CultureInfo.InvariantCulture) : 0.00,
                                                                                    Time = trackPointElement.Element(ns1 + "Time") != null ? DateTime.ParseExact((string)trackPointElement.Element(ns1 + "Time").Value, "yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture) : DateTime.MinValue
 
 
@@ -125,34 +127,18 @@ namespace TcxReader
 
                 double maxSlopeMinus = 0;
 
+                List<double> slopes = new List<double>();
+
                 foreach (var l in a.Laps)
                 {
                     foreach (var t in l.Tracks)
                     {
-
-
                         foreach (var tp in t.TrackPoints)
                         {
                             if (ticks == 0)
                                 ticks = tp.Time.Ticks;
                             chart1.Series[0].Points.Add(new System.Windows.Forms.DataVisualization.Charting.DataPoint() { YValues = new double[] { tp.AltitudeMeters }, XValue = TimeSpan.FromTicks(tp.Time.Ticks - ticks).TotalMinutes });
-                            if (prevTime != DateTime.MinValue && prevHeight != -1 && tp.Time - prevTime > new TimeSpan(0,0, trackBar1.Value))
-                            {
-                                double y = ((tp.AltitudeMeters - prevHeight) / (tp.DistanceMeters - prevDistance)) * 100;
-                                if (y < 100 && y > -100)
-                                {
-                                    chart1.Series[1].Points.Add(new System.Windows.Forms.DataVisualization.Charting.DataPoint() { YValues = new double[] { y }, XValue = TimeSpan.FromTicks(tp.Time.Ticks - ticks).TotalMinutes });
-
-                                    if (y > 0)
-                                        maxSlopePlus = y > maxSlopePlus ? y : maxSlopePlus;
-                                    else
-                                        maxSlopeMinus = y < maxSlopePlus ? y : maxSlopePlus;
-                                }
-                                
-                                prevHeight = tp.AltitudeMeters;
-                                prevDistance = tp.DistanceMeters;
-                                prevTime = tp.Time;
-                            }
+                            
 
                             if (prevDistance == -1 && prevHeight == -1)
                             {
@@ -160,6 +146,34 @@ namespace TcxReader
                                 prevDistance = tp.DistanceMeters;
                                 prevTime = tp.Time;
                             }
+
+                            if (prevTime != DateTime.MinValue && prevHeight != -1)
+                            {
+                                double y = ((tp.AltitudeMeters - prevHeight) / (tp.DistanceMeters - prevDistance)) * 100;
+
+                                if (double.IsInfinity(y)) y = 0;
+
+                                slopes.Add(y);
+                            }
+
+
+                            if (slopes.Count() == trackBar1.Value)
+                            {
+                                double slope = slopes.Average();
+                                slopes.RemoveAt(0);
+
+                                if (slope > 0)
+                                    maxSlopePlus = slope > maxSlopePlus ? slope : maxSlopePlus;
+                                else
+                                    maxSlopeMinus = slope < maxSlopeMinus ? slope : maxSlopeMinus;
+                                chart1.Series[1].Points.Add(new System.Windows.Forms.DataVisualization.Charting.DataPoint() { YValues = new double[] { slope }, XValue = TimeSpan.FromTicks(tp.Time.Ticks - ticks).TotalMinutes });
+                            }
+
+
+
+                            prevHeight = tp.AltitudeMeters;
+                            prevDistance = tp.DistanceMeters;
+                            prevTime = tp.Time;
                         }
                     }
                 }
@@ -180,6 +194,8 @@ namespace TcxReader
                 double prevDistance = -1;
                 double prevHeight = -1;
 
+                List<double> slopes = new List<double>();
+
                 double maxSlopePlus = 0;
 
                 double maxSlopeMinus = 0;
@@ -193,27 +209,34 @@ namespace TcxReader
                         foreach (var tp in t.TrackPoints)
                         {
                             chart1.Series[0].Points.Add(new System.Windows.Forms.DataVisualization.Charting.DataPoint() { YValues = new double[] { tp.AltitudeMeters }, XValue = tp.DistanceMeters });
-                            if (prevDistance != -1 && prevHeight != -1 && tp.DistanceMeters - prevDistance > trackBar1.Value)
+
+                            if (prevDistance != -1 && prevHeight != -1)
                             {
                                 double y = ((tp.AltitudeMeters - prevHeight) / (tp.DistanceMeters - prevDistance)) * 100;
-                                if (y < 100 && y > -100)
-                                {
-                                    if (y > 0)
-                                        maxSlopePlus = y > maxSlopePlus ? y : maxSlopePlus;
-                                    else
-                                        maxSlopeMinus = y < maxSlopeMinus ? y : maxSlopeMinus;
-                                    chart1.Series[1].Points.Add(new System.Windows.Forms.DataVisualization.Charting.DataPoint() { YValues = new double[] { y }, XValue = tp.DistanceMeters });
-                                }
-                                
-                                prevHeight = tp.AltitudeMeters;
-                                prevDistance = tp.DistanceMeters;
+
+                                if (double.IsInfinity(y)) y = 0;
+
+                                slopes.Add(y);
                             }
 
-                            if (prevDistance == -1 && prevHeight == -1)
+
+                            if (slopes.Count() == trackBar1.Value )
                             {
-                                prevHeight = tp.AltitudeMeters;
-                                prevDistance = tp.DistanceMeters;
+                                double slope = slopes.Average();
+                                slopes.RemoveAt(0);
+
+                                if (slope > 0)
+                                    maxSlopePlus = slope > maxSlopePlus ? slope : maxSlopePlus;
+                                else
+                                    maxSlopeMinus = slope < maxSlopeMinus ? slope : maxSlopeMinus;
+                                chart1.Series[1].Points.Add(new System.Windows.Forms.DataVisualization.Charting.DataPoint() { YValues = new double[] { slope }, XValue = tp.DistanceMeters });
                             }
+
+
+
+                            prevHeight = tp.AltitudeMeters;
+                            prevDistance = tp.DistanceMeters;
+
                         }
                     }
                 }
@@ -233,18 +256,50 @@ namespace TcxReader
 
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
-            
+
+            _updatePtLabel();
+
+        }
+
+        private void _updatePtLabel()
+        {
             if (radioButton1.Checked)
             {
                 _drawDistanceChart();
-                label5.Text = trackBar1.Value.ToString() + "m";
+                label5.Text = trackBar1.Value.ToString() + "pt";
             }
             else
             {
                 _drawTimeChart();
-                label5.Text = trackBar1.Value.ToString()+"s";
+                label5.Text = trackBar1.Value.ToString() + "pt";
             }
+        }
 
+        private void pointListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_activities != null)
+            {
+                PointListForm plf = new PointListForm();
+                List<Trackpoint> list = new List<Trackpoint>();
+                foreach (var a in _activities)
+                {
+
+
+                    foreach (var l in a.Laps)
+                    {
+                        foreach (var t in l.Tracks)
+                        {
+
+                            foreach (var tp in t.TrackPoints)
+                            {
+                                list.Add(tp);
+                            }
+                        }
+                    }
+                }
+
+                plf.Show(list, this);
+            }
         }
     }
 }

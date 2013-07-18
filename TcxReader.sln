@@ -3,16 +3,40 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcxReader", "TcxReader\TcxReader.csproj", "{DF22764D-E73A-48CB-A366-0FC441F7C719}"
 EndProject
+Project("{6141683F-8A12-4E36-9623-2EB02B2C2303}") = "TcxReaderSetup", "TcxReaderSetup\TcxReaderSetup.isproj", "{DF52BBDF-C178-454F-BAAC-25459DB5095D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DF22764D-E73A-48CB-A366-0FC441F7C719} = {DF22764D-E73A-48CB-A366-0FC441F7C719}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		CD_ROM|Any CPU = CD_ROM|Any CPU
 		Debug|Any CPU = Debug|Any CPU
+		DVD-5|Any CPU = DVD-5|Any CPU
 		Release|Any CPU = Release|Any CPU
+		SingleImage|Any CPU = SingleImage|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF22764D-E73A-48CB-A366-0FC441F7C719}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
+		{DF22764D-E73A-48CB-A366-0FC441F7C719}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
 		{DF22764D-E73A-48CB-A366-0FC441F7C719}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DF22764D-E73A-48CB-A366-0FC441F7C719}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF22764D-E73A-48CB-A366-0FC441F7C719}.DVD-5|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF22764D-E73A-48CB-A366-0FC441F7C719}.DVD-5|Any CPU.Build.0 = Debug|Any CPU
 		{DF22764D-E73A-48CB-A366-0FC441F7C719}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF22764D-E73A-48CB-A366-0FC441F7C719}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF22764D-E73A-48CB-A366-0FC441F7C719}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
+		{DF22764D-E73A-48CB-A366-0FC441F7C719}.SingleImage|Any CPU.Build.0 = Release|Any CPU
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.CD_ROM|Any CPU.ActiveCfg = CD_ROM
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.CD_ROM|Any CPU.Build.0 = CD_ROM
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.Debug|Any CPU.ActiveCfg = DVD-5
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.Debug|Any CPU.Build.0 = DVD-5
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.DVD-5|Any CPU.ActiveCfg = DVD-5
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.DVD-5|Any CPU.Build.0 = DVD-5
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.Release|Any CPU.ActiveCfg = SingleImage
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.Release|Any CPU.Build.0 = SingleImage
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.SingleImage|Any CPU.ActiveCfg = SingleImage
+		{DF52BBDF-C178-454F-BAAC-25459DB5095D}.SingleImage|Any CPU.Build.0 = SingleImage
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
